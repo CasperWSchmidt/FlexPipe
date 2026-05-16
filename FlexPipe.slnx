@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="src\FlexPipe\FlexPipe.csproj" />
+  <Project Path="src\FlexPipe.SourceGeneration\FlexPipe.SourceGeneration.csproj" />
+  <Project Path="src\FlexPipe.Extensions.DependencyInjection\FlexPipe.Extensions.DependencyInjection.csproj" />
+  <Project Path="src\FlexPipe.Extensions.SimpleInjector\FlexPipe.Extensions.SimpleInjector.csproj" />
+  <Project Path="src\FlexPipe.Samples\FlexPipe.Samples.csproj" />
+  <Project Path="tests\FlexPipe.Tests\FlexPipe.Tests.csproj" />
+  <Project Path="tests\FlexPipe.SourceGeneration.Tests\FlexPipe.SourceGeneration.Tests.csproj" />
+</Solution>
