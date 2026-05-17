@@ -11,6 +11,9 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     outputs:
       version: ${{ steps.version.outputs.majorMinorPatch }}
 
@@ -78,6 +81,12 @@ jobs:
         with:
           name: nuget-packages
           path: ./artifacts/*.nupkg
+
+      - name: Tag release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git tag v${{ steps.version.outputs.majorMinorPatch }}
+          git push origin v${{ steps.version.outputs.majorMinorPatch }}
 
   release:
     name: Release
