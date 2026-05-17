@@ -8,4 +8,13 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
   </ItemGroup>
+
+  <Target Name="AddAnalyzersToPack" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="..\FlexPipe.SourceGeneration\bin\$(Configuration)\netstandard2.0\FlexPipe.SourceGeneration.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false" />
+    </ItemGroup>
+  </Target>
 </Project>
