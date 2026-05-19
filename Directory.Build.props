@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsPackable)' != 'false'">
+    <Authors>Casper Schmidt Wandahl-Liper</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

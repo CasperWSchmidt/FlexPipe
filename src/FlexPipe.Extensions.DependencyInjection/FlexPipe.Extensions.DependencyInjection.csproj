@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>Microsoft.Extensions.DependencyInjection adapter for FlexPipe. Provides extension methods to register and resolve FlexPipe pipelines using the built-in .NET DI container.</Description>
+    <PackageTags>pipeline;middleware;dependency-injection;extensions;dotnet;netstandard</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
