@@ -1,5 +1,7 @@
 # FlexPipe
 
+[![CI/CD](https://github.com/CasperWSchmidt/FlexPipe/actions/workflows/ci.yml/badge.svg)](https://github.com/CasperWSchmidt/FlexPipe/actions/workflows/ci.yml)
+
 A lightweight, strongly-typed pipeline framework targeting .NET Standard 2.0+. Define pipelines as a sequence of tasks and compose cross-cutting concerns with middleware.
 
 ## Features
