@@ -1,19 +1,17 @@
 # FlexPipe
 
-A lightweight, strongly-typed pipeline framework targeting .NET Standard 2.0+. Define pipelines as a sequence of tasks, compose cross-cutting concerns with middleware, and let a Roslyn source generator wire up the context boilerplate automatically.
+A lightweight, strongly-typed pipeline framework targeting .NET Standard 2.0+. Define pipelines as a sequence of tasks and compose cross-cutting concerns with middleware.
 
 ## Features
 
 - **Strongly typed** — every pipeline is bound to a concrete `TInput` and `TOutput`
 - **Failure channel** — tasks signal failure through the context rather than throwing; exceptions are caught automatically
 - **Middleware** — decorate execution with logging, timing, auditing, transactions, or any cross-cutting concern
-- **Source generator** — implements `IPipelineContext` for you; just declare the pipeline and extend the partial class if needed
+- **Base context class** — use `PipelineContext<TInput, TOutput>` directly, or subclass it to add custom properties
 - **Fluent builder** — register and compose pipelines with a clean API in `Program.cs` or `Startup.cs`
 - **Fail-fast** — duplicate tasks, duplicate middlewares, and duplicate pipeline registrations are detected at startup, not at runtime
 
 ## Installation
-
-Always install `FlexPipe` directly — this is what activates the source generator:
 
 ```
 dotnet add package FlexPipe
@@ -30,8 +28,6 @@ dotnet add package FlexPipe.Extensions.DependencyInjection
 ```
 dotnet add package FlexPipe.Extensions.SimpleInjector
 ```
-
-> The source generator is bundled inside the `FlexPipe` package and runs automatically when it is a direct dependency. Installing only an adapter package is not sufficient — NuGet does not activate analyzers from transitive dependencies.
 
 If you are wiring up your own container, `FlexPipe` alone is all you need. `PipelineBuilder.Build()` returns an `IReadOnlyDictionary<(Type Input, Type Output), IPipelineDescriptor>` — iterate it to register tasks, middlewares, and the executor using your container's API.
 
@@ -52,24 +48,16 @@ public class PriceOutput
 }
 ```
 
-### 2. Declare the pipeline
+### 2. Create a context (optional)
 
-Implement `IPipelineDefinition<TInput, TOutput>` — this is the trigger for the source generator:
-
-```csharp
-public class PricePipeline : IPipelineDefinition<PriceInput, PriceOutput> { }
-```
-
-The generator produces a `PriceContext` partial class that implements `IPipelineContext<PriceInput, PriceOutput>`. To add custom properties, extend the partial:
+If your pipeline needs no custom properties, skip this step and use `PipelineContext<TInput, TOutput>` directly when executing. If you need custom properties, subclass it:
 
 ```csharp
-public partial class PriceContext
+public class PriceContext : PipelineContext<PriceInput, PriceOutput>
 {
     public string CorrelationId { get; set; } = string.Empty;
 }
 ```
-
-> The context name is derived by stripping the `Pipeline` suffix and appending `Context`. `PricePipeline` → `PriceContext`, `OrderHandler` → `OrderHandlerContext`.
 
 ### 3. Write tasks
 
@@ -209,7 +197,7 @@ builder
 
 ### Pipeline context
 
-The source generator produces a `partial class` that implements `IPipelineContext<TInput, TOutput>`. The generated members are:
+`PipelineContext<TInput, TOutput>` is the base class for all pipeline contexts. Use it directly when no custom properties are needed, or subclass it to add your own:
 
 | Member | Description |
 |---|---|
@@ -220,10 +208,10 @@ The source generator produces a `partial class` that implements `IPipelineContex
 | `void Fail(string)` | Records a failure with a stack trace pointing to the call site |
 | `void Fail(Exception)` | Records an existing exception directly |
 
-Extend the partial to add your own properties:
+Subclass to add custom properties:
 
 ```csharp
-public partial class OrderContext
+public class OrderContext : PipelineContext<OrderInput, OrderOutput>
 {
     public string CorrelationId { get; set; } = string.Empty;
     public string TenantId { get; set; } = string.Empty;
@@ -238,6 +226,20 @@ var context = new OrderContext
     Input = new OrderInput { CustomerEmail = "user@example.com", Sku = "ABC-1", Quantity = 2 },
     CorrelationId = "xyz-789"
 };
+```
+
+Tasks that need access to custom properties cast the context to the concrete type:
+
+```csharp
+public class LogCorrelationTask : IPipelineTask<OrderInput, OrderOutput>
+{
+    public Task Execute(IPipelineContext<OrderInput, OrderOutput> context, CancellationToken cancellationToken)
+    {
+        var ctx = (OrderContext)context;
+        Console.WriteLine(ctx.CorrelationId);
+        return Task.CompletedTask;
+    }
+}
 ```
 
 ## Builder API
@@ -277,11 +279,8 @@ public class OrderOutput
     public Guid OrderId { get; set; }
 }
 
-// Pipeline definition (triggers source generator)
-public class OrderPipeline : IPipelineDefinition<OrderInput, OrderOutput> { }
-
-// Optional context extension
-public partial class OrderContext
+// Context with custom properties
+public class OrderContext : PipelineContext<OrderInput, OrderOutput>
 {
     public string CorrelationId { get; set; } = string.Empty;
 }
@@ -317,7 +316,6 @@ public class CreateOrderTask : IPipelineTask<OrderInput, OrderOutput>
         return Task.CompletedTask;
     }
 }
-
 ```
 
 **Registration**
@@ -360,13 +358,11 @@ else
 ```
 src/
   FlexPipe/                                 Core library — interfaces, executor, builder
-  FlexPipe.SourceGeneration/                Roslyn source generator for IPipelineContext
   FlexPipe.Extensions.DependencyInjection/  MS DI adapter
   FlexPipe.Extensions.SimpleInjector/       SimpleInjector adapter
   FlexPipe.Samples/                         Runnable examples
 tests/
   FlexPipe.Tests/                           Unit and integration tests
-  FlexPipe.SourceGeneration.Tests/          Source generator tests
 ```
 
 ## Requirements

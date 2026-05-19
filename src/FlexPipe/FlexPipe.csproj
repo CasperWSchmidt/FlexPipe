@@ -4,19 +4,4 @@
     <Description>A lightweight, strongly-typed pipeline framework for .NET. Define pipelines as a sequence of composable tasks and cross-cutting middleware.</Description>
     <PackageTags>pipeline;middleware;strongly-typed;dotnet;netstandard</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\FlexPipe.SourceGeneration\FlexPipe.SourceGeneration.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-  </ItemGroup>
-
-  <Target Name="AddAnalyzersToPack" BeforeTargets="_GetPackageFiles">
-    <ItemGroup>
-      <None Include="..\FlexPipe.SourceGeneration\bin\$(Configuration)\netstandard2.0\FlexPipe.SourceGeneration.dll"
-            Pack="true"
-            PackagePath="analyzers/dotnet/cs"
-            Visible="false" />
-    </ItemGroup>
-  </Target>
 </Project>

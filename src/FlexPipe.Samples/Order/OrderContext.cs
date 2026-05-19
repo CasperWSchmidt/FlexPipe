@@ -1,6 +1,6 @@
 namespace FlexPipe.Samples.Order;
 
-public partial class OrderContext
+public class OrderContext : PipelineContext<OrderInput, OrderOutput>
 {
     public string CorrelationId { get; set; } = string.Empty;
 }
