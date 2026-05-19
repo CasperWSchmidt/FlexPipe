@@ -199,7 +199,7 @@ builder
 
 ### Pipeline context
 
-`PipelineContext<TInput, TOutput>` is the base class for all pipeline contexts. Use it directly when no custom properties are needed, or subclass it to add your own:
+`PipelineContext<TInput, TOutput>` is the base class for all pipeline contexts. It carries `Input` and `Output` for domain data — subclass it to add execution state such as correlation IDs, tenant identifiers, or audit metadata on top:
 
 | Member | Description |
 |---|---|
