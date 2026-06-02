@@ -9,7 +9,7 @@ public class PipelineDescriptorTests
     public void Build_DuplicateTask_ThrowsInvalidOperationException()
     {
         var builder = new PipelineBuilder();
-        builder.AddPipeline<TestInput, TestOutput>()
+        builder.GetOrAddPipeline<TestInput, TestOutput>()
             .AddTask<TaskA>()
             .AddTask<TaskA>();
 
@@ -21,7 +21,7 @@ public class PipelineDescriptorTests
     public void Build_DuplicateMiddleware_ThrowsInvalidOperationException()
     {
         var builder = new PipelineBuilder();
-        builder.AddPipeline<TestInput, TestOutput>()
+        builder.GetOrAddPipeline<TestInput, TestOutput>()
             .AddMiddleware<MiddlewareA>()
             .AddMiddleware<MiddlewareA>();
 
@@ -32,7 +32,7 @@ public class PipelineDescriptorTests
     [Fact]
     public void InsertBefore_NonExistentTask_ThrowsInvalidOperationException()
     {
-        var descriptor = new PipelineBuilder().AddPipeline<TestInput, TestOutput>();
+        var descriptor = new PipelineBuilder().GetOrAddPipeline<TestInput, TestOutput>();
         descriptor.AddTask<TaskA>();
 
         var ex = Assert.Throws<InvalidOperationException>(() => descriptor.InsertBefore<TaskB, TaskA>());
@@ -42,7 +42,7 @@ public class PipelineDescriptorTests
     [Fact]
     public void InsertAfter_NonExistentTask_ThrowsInvalidOperationException()
     {
-        var descriptor = new PipelineBuilder().AddPipeline<TestInput, TestOutput>();
+        var descriptor = new PipelineBuilder().GetOrAddPipeline<TestInput, TestOutput>();
         descriptor.AddTask<TaskA>();
 
         var ex = Assert.Throws<InvalidOperationException>(() => descriptor.InsertAfter<TaskB, TaskA>());
@@ -50,20 +50,19 @@ public class PipelineDescriptorTests
     }
 
     [Fact]
-    public void AddPipeline_DuplicateTypes_ThrowsInvalidOperationException()
+    public void GetOrAddPipeline_CalledTwice_ReturnsSameInstance()
     {
         var builder = new PipelineBuilder();
-        builder.AddPipeline<TestInput, TestOutput>();
-
-        var ex = Assert.Throws<InvalidOperationException>(() => builder.AddPipeline<TestInput, TestOutput>());
-        Assert.Contains("TestInput", ex.Message);
+        var first = builder.GetOrAddPipeline<TestInput, TestOutput>();
+        var second = builder.GetOrAddPipeline<TestInput, TestOutput>();
+        Assert.Same(first, second);
     }
 
     [Fact]
     public void Build_ReturnsDescriptor_WithCorrectTaskTypes()
     {
         var builder = new PipelineBuilder();
-        builder.AddPipeline<TestInput, TestOutput>()
+        builder.GetOrAddPipeline<TestInput, TestOutput>()
             .AddTask<TaskA>()
             .AddTask<TaskB>();
 
@@ -76,7 +75,7 @@ public class PipelineDescriptorTests
     public void Build_ReturnsDescriptor_WithCorrectMiddlewareTypes()
     {
         var builder = new PipelineBuilder();
-        builder.AddPipeline<TestInput, TestOutput>()
+        builder.GetOrAddPipeline<TestInput, TestOutput>()
             .AddMiddleware<MiddlewareA>();
 
         var descriptor = builder.Build()[(typeof(TestInput), typeof(TestOutput))];
@@ -88,8 +87,8 @@ public class PipelineDescriptorTests
     public void Build_ReturnsEntry_ForEachRegisteredPipeline()
     {
         var builder = new PipelineBuilder();
-        builder.AddPipeline<TestInput, TestOutput>();
-        builder.AddPipeline<TestOutput, TestInput>();
+        builder.GetOrAddPipeline<TestInput, TestOutput>();
+        builder.GetOrAddPipeline<TestOutput, TestInput>();
 
         var result = builder.Build();
 
@@ -102,7 +101,7 @@ public class PipelineDescriptorTests
     public void Build_ReturnsEmptyTasksAndMiddlewares_ForEmptyPipeline()
     {
         var builder = new PipelineBuilder();
-        builder.AddPipeline<TestInput, TestOutput>();
+        builder.GetOrAddPipeline<TestInput, TestOutput>();
 
         var descriptor = builder.Build()[(typeof(TestInput), typeof(TestOutput))];
 

@@ -11,7 +11,7 @@ A lightweight, strongly-typed pipeline framework targeting .NET Standard 2.0+. D
 - **Middleware** — decorate execution with logging, timing, auditing, transactions, or any cross-cutting concern
 - **Base context class** — use `PipelineContext<TInput, TOutput>` directly, or subclass it to add custom properties
 - **Fluent builder** — register and compose pipelines with a clean API in `Program.cs` or `Startup.cs`
-- **Fail-fast** — duplicate tasks, duplicate middlewares, and duplicate pipeline registrations are detected at startup, not at runtime
+- **Fail-fast** — duplicate tasks and duplicate middlewares within a pipeline are detected at startup, not at runtime
 
 ## Installation
 
@@ -86,7 +86,7 @@ using FlexPipe.Extensions.DependencyInjection;
 services.AddFlexPipe(builder =>
 {
     builder
-        .AddPipeline<PriceInput, PriceOutput>()
+        .GetOrAddPipeline<PriceInput, PriceOutput>()
         .AddTask<CalculateTotalTask>();
 });
 ```
@@ -190,7 +190,7 @@ Register middleware before tasks — it wraps execution in registration order (f
 
 ```csharp
 builder
-    .AddPipeline<OrderInput, OrderOutput>()
+    .GetOrAddPipeline<OrderInput, OrderOutput>()
     .AddMiddleware<AuditMiddleware<OrderInput, OrderOutput>>()
     .AddMiddleware<TimingMiddleware<OrderInput, OrderOutput>>()
     .AddTask<ValidateOrderTask>()
@@ -249,7 +249,7 @@ public class LogCorrelationTask : IPipelineTask<OrderInput, OrderOutput>
 ### Task composition
 
 ```csharp
-builder.AddPipeline<TInput, TOutput>()
+builder.GetOrAddPipeline<TInput, TOutput>()
     .AddTask<TaskA>()               // append to end
     .InsertFirst<TaskZ>()           // prepend to beginning
     .InsertLast<TaskY>()            // append to end (same as AddTask)
@@ -263,7 +263,36 @@ builder.AddPipeline<TInput, TOutput>()
 
 ### Duplicate detection
 
-Registering the same task or middleware type twice in a pipeline, or registering the same `TInput`/`TOutput` combination twice, throws `InvalidOperationException` at startup — not at runtime.
+Registering the same task or middleware type twice in a pipeline throws `InvalidOperationException` at startup — not at runtime. Calling `GetOrAddPipeline<TInput, TOutput>()` a second time for the same type pair returns the same mutable descriptor — any tasks or middleware added in the second call are appended to the same pipeline.
+
+### Framework integration
+
+`GetOrAddPipeline` is designed for the "framework registers first, consumer extends later" pattern. A framework library calls `AddFlexPipe` internally, registers its base tasks, and then forwards a `PipelineBuilder` to a consumer-supplied callback. The consumer calls `GetOrAddPipeline` for the same type pair and extends the pipeline using `InsertBefore`, `InsertAfter`, or `AddTask` — all changes land in the same pipeline.
+
+```csharp
+// Framework library — wraps AddFlexPipe and exposes the builder to consumers
+public static IServiceCollection AddMyFramework(
+    this IServiceCollection services,
+    Action<PipelineBuilder>? configure = null)
+{
+    return services.AddFlexPipe(builder =>
+    {
+        builder.GetOrAddPipeline<OrderInput, OrderOutput>()
+            .AddTask<ValidateOrderTask>()
+            .AddTask<CreateOrderTask>();
+
+        configure?.Invoke(builder);
+    });
+}
+
+// Consumer startup
+services.AddMyFramework(builder =>
+{
+    builder.GetOrAddPipeline<OrderInput, OrderOutput>()
+        .InsertBefore<ValidateOrderTask, TenantValidationTask>()
+        .AddTask<AuditOrderTask>();
+});
+```
 
 ## Full example
 
@@ -329,7 +358,7 @@ using Microsoft.Extensions.DependencyInjection;
 services.AddFlexPipe(builder =>
 {
     builder
-        .AddPipeline<OrderInput, OrderOutput>()
+        .GetOrAddPipeline<OrderInput, OrderOutput>()
         .AddMiddleware<AuditMiddleware<OrderInput, OrderOutput>>()
         .AddTask<ValidateOrderTask>()
         .AddTask<CreateOrderTask>();

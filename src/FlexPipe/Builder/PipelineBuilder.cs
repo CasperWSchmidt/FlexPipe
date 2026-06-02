@@ -4,16 +4,14 @@ public class PipelineBuilder
 {
     private readonly Dictionary<(Type Input, Type Output), IPipelineDescriptor> _descriptors = [];
 
-    public PipelineDescriptor<TInput, TOutput> AddPipeline<TInput, TOutput>()
+    public PipelineDescriptor<TInput, TOutput> GetOrAddPipeline<TInput, TOutput>()
     {
-        var descriptor = new PipelineDescriptor<TInput, TOutput>();
-
         var key = (typeof(TInput), typeof(TOutput));
-        if (_descriptors.ContainsKey(key))
-            throw new InvalidOperationException(
-                $"A pipeline for '{typeof(TInput).Name}/{typeof(TOutput).Name}' is already registered.");
-        _descriptors[key] = descriptor;
+        if (_descriptors.TryGetValue(key, out var existing))
+            return (PipelineDescriptor<TInput, TOutput>)existing;
 
+        var descriptor = new PipelineDescriptor<TInput, TOutput>();
+        _descriptors[key] = descriptor;
         return descriptor;
     }
 
