@@ -13,7 +13,7 @@ public class PipelineIntegrationTests
         var log = new List<string>();
         var services = new ServiceCollection();
         services.AddSingleton(log);
-        services.AddFlexPipe(builder => configure(builder.AddPipeline<TestInput, TestOutput>()));
+        services.AddFlexPipe(builder => configure(builder.GetOrAddPipeline<TestInput, TestOutput>()));
         return (services.BuildServiceProvider(), log);
     }
 
@@ -24,7 +24,7 @@ public class PipelineIntegrationTests
     {
         var services = new ServiceCollection();
         services.AddFlexPipe(builder =>
-            builder.AddPipeline<TestInput, TestOutput>().AddTask<SimpleTask>());
+            builder.GetOrAddPipeline<TestInput, TestOutput>().AddTask<SimpleTask>());
 
         var sp = services.BuildServiceProvider();
 

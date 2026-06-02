@@ -12,7 +12,7 @@ var services = new ServiceCollection();
 services.AddFlexPipe(builder =>
 {
     builder
-        .AddPipeline<PriceInput, PriceOutput>()
+        .GetOrAddPipeline<PriceInput, PriceOutput>()
         .AddMiddleware<TimingMiddleware<PriceInput, PriceOutput>>()
         .AddTask<CalculateTotalTask>();
 });
@@ -38,7 +38,7 @@ services = new ServiceCollection();
 services.AddFlexPipe(builder =>
 {
     builder
-        .AddPipeline<OrderInput, OrderOutput>()
+        .GetOrAddPipeline<OrderInput, OrderOutput>()
         .AddMiddleware<AuditMiddleware<OrderInput, OrderOutput>>()
         .AddTask<ValidateOrderTask>()
         .AddTask<CreateOrderTask>();
