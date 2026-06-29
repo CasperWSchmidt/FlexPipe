@@ -384,6 +384,47 @@ else
     Console.WriteLine($"Failed: {string.Join(", ", result.Errors.Select(e => e.Message))}");
 ```
 
+## OpenTelemetry
+
+FlexPipe emits traces and metrics using standard .NET diagnostic APIs — no OpenTelemetry SDK dependency is added to your project. Both are no-ops when no listener is attached, so there is zero overhead unless you explicitly wire up OTel.
+
+**ActivitySource name:** `"FlexPipe"`  
+**Meter name:** `"FlexPipe"`
+
+### Wiring up in ASP.NET Core
+
+Install the OpenTelemetry hosting package and your preferred exporter, then subscribe by name:
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource("FlexPipe")
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .AddMeter("FlexPipe")
+        .AddOtlpExporter());
+```
+
+The `pipeline.execute` span inherits `Activity.Current` from the caller (e.g. an incoming HTTP request), so FlexPipe execution appears as a child of your existing traces automatically.
+
+### Spans
+
+| Span | Attributes |
+|------|-----------|
+| `pipeline.execute` | `pipeline.input_type`, `pipeline.output_type`, `pipeline.succeeded` |
+| `pipeline.task` | `pipeline.task_type`, `pipeline.succeeded` |
+
+`pipeline.task` spans are children of `pipeline.execute`. If a task throws, an `exception` event is recorded on the task span with `exception.type`, `exception.message`, and `exception.stacktrace`. Both spans have their status set to `Error` on failure.
+
+### Metrics
+
+| Metric | Unit | Dimensions |
+|--------|------|-----------|
+| `flexpipe.pipeline.duration` | ms | `pipeline.input_type`, `pipeline.output_type`, `pipeline.succeeded` |
+| `flexpipe.task.duration` | ms | `pipeline.task_type`, `pipeline.succeeded` |
+
+All `*_type` dimension values are the short class name (e.g. `"CreateOrderInput"`, not the fully qualified name).
+
 ## Project structure
 
 ```
