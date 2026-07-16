@@ -7,8 +7,13 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddFlexPipe(
         this IServiceCollection services,
-        Action<PipelineBuilder> configure)
+        Action<PipelineBuilder> configure,
+        Action<FlexPipeOptions>? configureOptions = null)
     {
+        var options = new FlexPipeOptions();
+        configureOptions?.Invoke(options);
+        services.AddSingleton(options);
+
         var builder = new PipelineBuilder();
         configure(builder);
 

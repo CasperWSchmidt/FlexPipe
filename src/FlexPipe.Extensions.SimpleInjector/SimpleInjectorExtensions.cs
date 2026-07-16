@@ -8,9 +8,21 @@ public static class SimpleInjectorExtensions
     public static Container AddFlexPipe(
         this Container container,
         Action<PipelineBuilder> configure,
-        Lifestyle? lifestyle = null)
+        Lifestyle? lifestyle = null,
+        Action<FlexPipeOptions>? configureOptions = null)
     {
         lifestyle ??= Lifestyle.Scoped;
+
+        var options = new FlexPipeOptions();
+        configureOptions?.Invoke(options);
+        container.RegisterInstance(options);
+
+        // The executor takes an ILoggerFactory, which FlexPipe deliberately does not register
+        // here. ILogger(Factory) is a host concern, normally set up via AddLogging on the
+        // IServiceCollection. In an ASP.NET Core + SimpleInjector host
+        // (SimpleInjector.Integration.ServiceCollection) it is auto cross-wired from the
+        // framework — matching the MS DI adapter. A pure-SimpleInjector app registers its own
+        // ILoggerFactory in the container (or NullLoggerFactory.Instance for no logging).
 
         var builder = new PipelineBuilder();
         configure(builder);
