@@ -134,7 +134,7 @@ A task can call `Fail` multiple times within its own body — all errors are rec
 Tasks signal failure through `context.Fail()` rather than throwing. The pipeline context accumulates errors and exposes them on `PipelineResult<TOutput>` after execution. Unhandled exceptions thrown by tasks are automatically caught and converted to failures.
 
 ```csharp
-void Fail(string error);        // wraps the message in an exception, stack trace points to the call site
+void Fail(string error);        // wraps the message in a PipelineTaskException; on .NET 5+ its stack trace points to the call site
 void Fail(Exception exception); // stores the exception directly
 ```
 
@@ -207,7 +207,7 @@ builder
 | `TOutput Output { get; set; }` | Written by tasks |
 | `bool IsFailed` | True when at least one error has been recorded |
 | `IReadOnlyList<Exception> Errors` | All recorded failures |
-| `void Fail(string)` | Records a failure with a stack trace pointing to the call site |
+| `void Fail(string)` | Records a `PipelineTaskException`; on .NET 5+ its stack trace points to the call site, on .NET Framework it is `null` |
 | `void Fail(Exception)` | Records an existing exception directly |
 
 Subclass to add custom properties:

@@ -13,7 +13,7 @@ internal class TestContext<TInput, TOutput>(TInput input) : IPipelineContext<TIn
 
     public void Fail(string error)
     {
-        var ex = new Exception(error);
+        var ex = new PipelineTaskException(error);
         ExceptionDispatchInfo.SetCurrentStackTrace(ex);
         _errors.Add(ex);
     }

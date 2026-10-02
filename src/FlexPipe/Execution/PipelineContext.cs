@@ -1,3 +1,7 @@
+#if NET5_0_OR_GREATER
+using System.Runtime.ExceptionServices;
+#endif
+
 namespace FlexPipe;
 
 public class PipelineContext<TInput, TOutput> : IPipelineContext<TInput, TOutput>
@@ -11,8 +15,11 @@ public class PipelineContext<TInput, TOutput> : IPipelineContext<TInput, TOutput
 
     public void Fail(string error)
     {
-        try { throw new Exception(error); }
-        catch (Exception ex) { _errors.Add(ex); }
+        var ex = new PipelineTaskException(error);
+#if NET5_0_OR_GREATER
+        ExceptionDispatchInfo.SetCurrentStackTrace(ex);
+#endif
+        _errors.Add(ex);
     }
 
     public void Fail(Exception exception) => _errors.Add(exception);
